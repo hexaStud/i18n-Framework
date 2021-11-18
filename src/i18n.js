@@ -1,7 +1,9 @@
 /** @class */ function I18n(translation) {
     let translationFile;
+    const events = new Map();
     loadTranslation(translation).then((translation) => {
         translationFile = translation;
+        emit("load");
     });
 
     async function loadTranslation(translation) {
@@ -22,8 +24,7 @@
         });
     }
 
-
-    function load() {
+    function update() {
         if (!!translationFile) {
             let elements = document.querySelectorAll("[i18n]");
 
@@ -48,25 +49,55 @@
     }
 
     function getTranslation(path) {
-        pathSegments = path.split(">");
+        let pathSegments = path.split(">");
         let value = translationFile;
         for (const segment of pathSegments) {
-            value = translationFile[segment];
-            if (!!value) {
-                return null;
+            value = value[segment];
+            if (!value) {
                 console.error("Translation path does not exists");
+                return null;
             }
         }
         if (typeof value === "object" || typeof value === "function" || Array.isArray(value)) {
-            return null
             console.error("Datatype is not supported");
+            return null;
         } else {
-            return value
+            return value;
+        }
+    }
+
+    /**
+     * @param ev {"load"}
+     * @param cb
+     */
+    function on(ev, cb) {
+        if (events.has(ev)) {
+            let evs = events.get(ev);
+            evs.push(cb);
+            events.set(ev, evs);
+        } else {
+            events.set(ev, [
+                cb
+            ]);
+        }
+    }
+
+    /**
+     * @param ev {"load"}
+     */
+    function emit(ev) {
+        if (events.has(ev)) {
+            let evs = events.get(ev);
+            for (const ev of evs) {
+                ev();
+            }
         }
     }
 
     return {
-        load,
-        getTranslation
+        on,
+        update,
+        getTranslation,
+        load: loadTranslation
     }
 }
