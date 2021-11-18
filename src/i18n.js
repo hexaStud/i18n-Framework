@@ -2,7 +2,12 @@ class I18n {
     #translationFile;
     #event = new Map();
 
-    async loadTranslation(translation) {
+    /**
+     * @param translation {string}
+     * @param method {"POST"|"GET"}
+     * @return {Promise<void>}
+     */
+    async loadTranslation(translation, method) {
         return new Promise((resolve, reject) => {
             let xhr = new XMLHttpRequest();
             xhr.onreadystatechange = () => {
@@ -17,7 +22,7 @@ class I18n {
                     }
                 }
             }
-            xhr.open("POST", translation, true);
+            xhr.open(method, translation, true);
             xhr.send();
         });
     }
