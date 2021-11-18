@@ -1,21 +1,19 @@
-/** @class */ function I18n(translation) {
-    let translationFile;
-    const events = new Map();
-    loadTranslation(translation).then((translation) => {
-        translationFile = translation;
-        emit("load");
-    });
+class I18n {
+    #translationFile;
+    #event = new Map();
 
-    async function loadTranslation(translation) {
-        return new Promise(function (resolve, reject) {
+    async loadTranslation(translation) {
+        return new Promise((resolve, reject) => {
             let xhr = new XMLHttpRequest();
-            xhr.onreadystatechange = function () {
-                if (this.readyState === 4 && this.status === 200) {
+            xhr.onreadystatechange = () => {
+                if (this.readyState === 4 && xhr.status === 200) {
                     try {
-                        let obj = JSON.parse(this.responseText);
-                        resolve(obj);
+                        let obj = JSON.parse(xhr.responseText);
+                        this.#translationFile = obj;
+                        this.#emit("load");
+                        resolve();
                     } catch (err) {
-                        throw err;
+                        reject(err);
                     }
                 }
             }
@@ -24,8 +22,8 @@
         });
     }
 
-    function update() {
-        if (!!translationFile) {
+    update() {
+        if (!!this.#translationFile) {
             let elements = document.querySelectorAll("[i18n]");
 
             elements.forEach((ele) => {
@@ -38,7 +36,7 @@
                 let path = ele.getAttribute("i18n");
                 if (!!path) {
                     let t;
-                    if (!!(t = getTranslation(path))) {
+                    if (!!(t = this.getTranslation(path))) {
                         ele.innerHTML = t;
                     } else {
                         setDefault();
@@ -48,9 +46,9 @@
         }
     }
 
-    function getTranslation(path) {
+    getTranslation(path) {
         let pathSegments = path.split(">");
-        let value = translationFile;
+        let value = this.#translationFile;
         for (const segment of pathSegments) {
             value = value[segment];
             if (!value) {
@@ -70,13 +68,13 @@
      * @param ev {"load"}
      * @param cb
      */
-    function on(ev, cb) {
-        if (events.has(ev)) {
-            let evs = events.get(ev);
+    on(ev, cb) {
+        if (this.#event.has(ev)) {
+            let evs = this.#event.get(ev);
             evs.push(cb);
-            events.set(ev, evs);
+            this.#event.set(ev, evs);
         } else {
-            events.set(ev, [
+            this.#event.set(ev, [
                 cb
             ]);
         }
@@ -85,19 +83,12 @@
     /**
      * @param ev {"load"}
      */
-    function emit(ev) {
-        if (events.has(ev)) {
-            let evs = events.get(ev);
+    #emit(ev) {
+        if (this.#event.has(ev)) {
+            let evs = this.#event.get(ev);
             for (const ev of evs) {
                 ev();
             }
         }
-    }
-
-    return {
-        on,
-        update,
-        getTranslation,
-        load: loadTranslation
     }
 }
