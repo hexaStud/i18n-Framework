@@ -7,11 +7,11 @@ class I18n {
      * @param method {"POST"|"GET"}
      * @return {Promise<void>}
      */
-    async loadTranslation(translation, method) {
+    async load(translation, method) {
         return new Promise((resolve, reject) => {
             let xhr = new XMLHttpRequest();
             xhr.onreadystatechange = () => {
-                if (this.readyState === 4 && xhr.status === 200) {
+                if (xhr.readyState === 4 && xhr.status === 200) {
                     try {
                         let obj = JSON.parse(xhr.responseText);
                         this.#translationFile = obj;
